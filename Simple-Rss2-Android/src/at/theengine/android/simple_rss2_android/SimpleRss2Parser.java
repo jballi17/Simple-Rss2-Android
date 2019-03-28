@@ -12,6 +12,9 @@ import android.sax.RootElement;
 import android.util.Xml;
 import android.widget.ArrayAdapter;
 
+import java.util.regex.Pattern;
+import android.util.Log;
+
 public class SimpleRss2Parser extends SimpleFeedParser {
 
 	private SimpleRss2ParserCallback mCallback;
@@ -96,11 +99,49 @@ public class SimpleRss2Parser extends SimpleFeedParser {
                 currentMessage.setDate(body);
             }
         });
-        try {
-            Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+	    
+	Pattern patternIso = Pattern.compile("ISO-8859-1");
+        Pattern utf = Pattern.compile("UTF-8");
+        Pattern utf16 = Pattern.compile("UTF-16");
+        Pattern usascii = Pattern.compile("US-ASCII");
+	    
+        if(patternIso.matcher(this.getInputStream().toString()).find()) {
+        	try {
+                	Xml.parse(this.getInputStream(), Xml.Encoding.ISO_8859_1, root.getContentHandler());
+                	Log.d("parse()", "ISO-8859-1 Encoding");
+                	return messages;
+			
+		} catch (Exception var7) {
+                	throw new RuntimeException(var7);
+                }
+        } else if(utf16.matcher(this.getInputStream().toString()).find()) {
+         	try {
+                	Xml.parse(this.getInputStream(), Xml.Encoding.UTF_16, root.getContentHandler());
+                        Log.d("parse()", "UTF-16 Encoding");
+                        return messages;
+			
+		} catch (Exception var7) {
+                        throw new RuntimeException(var7);
+                }
+        } else if(usascii.matcher(this.getInputStream().toString()).find()) {
+                try {
+                	Xml.parse(this.getInputStream(), Xml.Encoding.US_ASCII, root.getContentHandler());
+                        Log.d("parse()", "US-ASCII Encoding");
+                        return messages;
+
+                } catch (Exception var7) {
+                	throw new RuntimeException(var7);
+                }
+        } else {
+                try {
+                	Xml.parse(this.getInputStream(), Xml.Encoding.UTF_8, root.getContentHandler());
+                        Log.d("parse()", "UTF-8 Encoding");
+                        return messages;
+			
+                } catch (Exception var7) {
+                	throw new RuntimeException(var7);
+                }
+	}
         return messages;
     }
 }
